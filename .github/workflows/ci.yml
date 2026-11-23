@@ -1,0 +1,58 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.11", "3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Check (types, tests, CLI end to end)
+        shell: bash
+        env:
+          PYTHONUTF8: "1"
+        run: uv run --python ${{ matrix.python }} --no-project --with pytest --with mypy bash -c 'PYTHON="$(command -v python)" bash scripts/check.sh'
+
+  quickstart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: README quickstart (uvx, hooks fall back to the pinned interpreter)
+        shell: bash
+        run: |
+          src="$GITHUB_WORKSPACE"
+          testedtree() { uvx --from "$src" testedtree "$@"; }
+          cd "$(mktemp -d)" && git init -q -b main && git config user.email ci@example.com && git config user.name CI
+          printf 'import sys\nsys.exit(0)\n' > check.py
+          testedtree init --check 'tests=python3 check.py'
+          git add -A && git commit -qm "adopt testedtree"
+          testedtree install
+          echo 'x = 1' > app.py && git add app.py
+          git commit -qm "untested" || echo "observe mode warns, does not block"
+          git log -1 --format=%B | grep -q "Tested-Tree: none"
+          testedtree run tests
+          echo 'x = 2' > app.py && testedtree run tests && git add app.py && git commit -qm "tested"
+          git log -1 --format=%B | grep -q "Tested-Tree: tests@"
+          testedtree report
+
+  action:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: ./
+        with:
+          base: main

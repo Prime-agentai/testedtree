@@ -1,0 +1,19 @@
+# testedtree: a commit passes the gate only if every required check passed
+# on a tree where the committed files are byte-identical.
+# This file is read from HEAD, so edits take effect after they are committed.
+
+[gate]
+mode = "enforce"        # off | observe (warn + stamp) | enforce (block)
+require = ["check"]
+coverage = "paths"      # paths: changed files identical | exact: whole tree identical
+escape_after = 2        # enforce: let a session through after N blocks (stamped as override)
+strikes = 3             # say 'stop and ask a human' after N consecutive failures
+exempt = ["*.md", "docs/**"]   # changes only here need no checks (they still get a stamp)
+
+[checks.check]
+run = "bash scripts/check.sh"
+# match = ['^uv run pytest( -q)?$']   # extra agent commands that count as this check
+
+[checklist]
+file = ".testedtree/checklist.toml"
+# base = "origin/main"   # read the checklist from here (default: HEAD)

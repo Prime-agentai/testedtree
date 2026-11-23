@@ -1,0 +1,23 @@
+# Diff-triggered checklist. Each item fires only when the diff can show it matters.
+# Read from a committed ref (HEAD, or [checklist] base), never the working copy.
+
+[[item]]
+id = "dependency-change"
+paths = ["pyproject.toml", "package.json", "go.mod", "Cargo.toml", "*.lock", "requirements*.txt"]
+check = "A dependency changed: is it pinned, licensed compatibly, and needed?"
+
+[[item]]
+id = "secrets-in-logs"
+added = ['(?i)\b(log|print|console\.log|logger\.\w+)\(.*(token|secret|password|authorization)']
+check = "A log line mentions a credential: make sure the value is redacted."
+
+[[item]]
+id = "migration-reversible"
+paths = ["**/migrations/**", "*.sql"]
+check = "Can this migration run twice, and be rolled back, without data loss?"
+
+[[item]]
+id = "test-weakened"
+paths = ["tests/**", "test/**", "**/*_test.*", "**/*.test.*", "**/test_*"]
+removed = ['\bassert', '\bexpect\(']
+check = "Assertions were removed from a test: was the behaviour really meant to change?"

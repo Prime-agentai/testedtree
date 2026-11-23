@@ -1,0 +1,38 @@
+name: testedtree
+description: Report which commits in a PR were tested as committed (Tested-Tree trailers) and which checklist items the diff triggers.
+branding:
+  icon: check-square
+  color: green
+inputs:
+  base:
+    description: Base ref to compare against. Default is the PR base branch, otherwise the default branch.
+    required: false
+    default: ""
+  fail-on:
+    description: 'Fail the job when a non-merge commit is "none" (not tested, including override/skip) or "unstamped" (also no trailer). Empty means report only.'
+    required: false
+    default: ""
+runs:
+  using: composite
+  steps:
+    - name: testedtree report
+      shell: bash
+      env:
+        PYTHONPATH: ${{ github.action_path }}/src
+        TT_BASE: ${{ inputs.base || github.event.pull_request.base.ref || github.event.repository.default_branch }}
+        TT_FAIL_ON: ${{ inputs.fail-on }}
+      run: |
+        PY="$(command -v python3 || command -v python)"
+        "$PY" -c 'import sys; assert sys.version_info >= (3, 11), "testedtree needs Python 3.11+ (use actions/setup-python)"'
+        base="origin/$TT_BASE"
+        git rev-parse --verify --quiet "$base" >/dev/null || git fetch --no-tags --quiet origin "$TT_BASE:refs/remotes/origin/$TT_BASE"
+        git rev-parse --verify --quiet "$base" >/dev/null || { echo "testedtree: base $base not found (use actions/checkout with fetch-depth: 0)"; exit 1; }
+        {
+          "$PY" -m testedtree report --range "$base..HEAD" --format md
+          echo
+          echo "### Checklist for this diff"
+          "$PY" -m testedtree checklist --range "$base...HEAD" --base "$base"
+        } | tee -a "${GITHUB_STEP_SUMMARY:-/dev/null}"
+        if [ -n "$TT_FAIL_ON" ]; then
+          "$PY" -m testedtree report --range "$base..HEAD" --fail-on "$TT_FAIL_ON" > /dev/null
+        fi

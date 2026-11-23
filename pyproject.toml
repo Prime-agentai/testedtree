@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "testedtree"
+version = "0.1.0"
+description = "Only commit the tree you tested: tree-bound verification evidence, a commit gate (observe/enforce), a Tested-Tree trailer on every commit, and a diff-triggered checklist read from the base branch. For Claude Code, Codex and any agent or human. Zero dependencies."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+authors = [{ name = "Prime-agentai" }]
+keywords = ["git", "git-hooks", "verification", "testing", "ai-agents", "coding-agents", "claude-code", "codex", "code-review", "commit-gate", "provenance"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development",
+  "Topic :: Software Development :: Quality Assurance",
+  "Topic :: Software Development :: Version Control :: Git",
+  "Typing :: Typed",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "mypy>=1.8"]
+
+[project.scripts]
+testedtree = "testedtree.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Prime-agentai/testedtree"
+Issues = "https://github.com/Prime-agentai/testedtree/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+testedtree = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "tests"]
+filterwarnings = ["error::pytest.PytestUnhandledThreadExceptionWarning"]
+
+[tool.mypy]
+strict = true
+files = ["src"]
